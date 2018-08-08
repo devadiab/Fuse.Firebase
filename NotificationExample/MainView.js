@@ -5,31 +5,36 @@ var status = Observable("-");
 var message = Observable("-no message yet-");
 
 Push.onRegistrationSucceeded = function(regID) {
-    console.log ("Reg Succeeded: " + regID);
-    status.value = "onRegistrationSucceeded: " + regID;
+	console.log("Reg Succeeded: " + regID);
+	status.value = "onRegistrationSucceeded: " + regID;
 };
 
 Push.onRegistrationFailed = function(reason) {
-    console.log ("Reg Failed: " + reason);
+	console.log("Reg Failed: " + reason);
 };
 
 Push.onReceivedMessage = function(payload, fromNotificationBar) {
-    console.log ("Recieved Push Notification: " + payload);
-    console.log ("fromNotificationBar="+fromNotificationBar);
-    message.value = payload;
+	console.log("Recieved Push Notification: " + payload);
+	console.log("fromNotificationBar=" + fromNotificationBar);
+	message.value = payload;
 };
 
 var clearBadgeNumber = function() {
-    Push.clearBadgeNumber();
+	Push.clearBadgeNumber();
 }
 
 var clearAllNotifications = function() {
-    Push.clearAllNotifications();
+	Push.clearAllNotifications();
+}
+
+var getToken = function() {
+	Push.getFCMToken();
 }
 
 module.exports = {
-    clearBadgeNumber: clearBadgeNumber,
-    clearAllNotifications: clearAllNotifications,
-    message: message,
-    status: status
+	clearBadgeNumber: clearBadgeNumber,
+	clearAllNotifications: clearAllNotifications,
+	message: message,
+	status: status,
+	getToken: getToken
 };
