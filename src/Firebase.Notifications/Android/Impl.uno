@@ -23,7 +23,7 @@ namespace Firebase.Notifications
                     "android.os.Bundle",
                     "com.fuse.firebase.Notifications.PushNotificationReceiver",
                     "com.google.firebase.messaging.RemoteMessage")]
-    [Require("Gradle.Dependency.Compile", "com.google.firebase:firebase-messaging:9.2.0")]
+    [Require("Gradle.Dependency.Compile", "com.google.firebase:firebase-messaging:12.0.1")]
     extern(Android)
     internal class AndroidImpl
     {
@@ -53,10 +53,13 @@ namespace Firebase.Notifications
                 new com.fuse.Activity.IntentListener() {
                     public void onIntent (Intent newIntent) {
                         String jsonStr = com.fuse.firebase.Notifications.PushNotificationReceiver.ToJsonString(newIntent);
-                        @{OnRecieve(string,bool):Call(jsonStr, false)};
+                        if( jsonStr != "{}")
+                        {
+                            @{OnRecieve(string,bool):Call(jsonStr, false)};
+                        }
                     }
                 },
-                PushNotificationReceiver.ACTION);
+                "android.intent.action.MAIN");
             String id = com.google.firebase.iid.FirebaseInstanceId.getInstance().getToken();
             @{getRegistrationIdSuccess(string):Call(id)};
         @}

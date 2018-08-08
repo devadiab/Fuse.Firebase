@@ -1,5 +1,7 @@
 package com.fuse.firebase.Notifications;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.support.v4.app.NotificationCompat;
 import android.content.res.AssetManager;
 import android.media.RingtoneManager;
@@ -181,36 +183,57 @@ public class PushNotificationReceiver extends FirebaseMessagingService
     void SpitOutNotification(RemoteMessage remoteMessage)
     {
         Context context = this;
+        int id = PushNotificationReceiver.nextID();
         Map<String,String> map = remoteMessage.getData();
         String title = map.get("title");
         String body = map.get("body");
         String sound = map.get("sound");
         String icon = map.get("icon");
+        
         String jsonStr = ToJsonString(remoteMessage);
-        Intent intent = new Intent(context, @(Activity.Package).@(Activity.Name).class);
+        Intent intent = new Intent(context, @(Activity.Package).@(Activity.Name).class); 
 
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         intent.setAction(PushNotificationReceiver.ACTION);
         intent.putExtra(PushNotificationReceiver.EXTRA_KEY, jsonStr);
 
         android.app.PendingIntent pendingIntent =
-            android.app.PendingIntent.getActivity(context, 0, intent, android.app.PendingIntent.FLAG_ONE_SHOT);
+            android.app.PendingIntent.getActivity(context, 0, intent, android.app.PendingIntent.FLAG_UPDATE_CURRENT);
+       
+        NotificationManager  notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
 
+        String channel_name = "my_package_channel";
+        String channel_id = "my_package_channel_1";
+        String channel_description = "my_package_first_channel";
 
-        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(context)
+        int importance = NotificationManager.IMPORTANCE_HIGH;
+        NotificationCompat.Builder notificationBuilder = null;
+        if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O)
+        {
+            NotificationChannel mChannel = notificationManager.getNotificationChannel(channel_id);
+            if (mChannel == null) {
+                mChannel = new NotificationChannel(channel_id, channel_name, importance);
+                notificationManager.createNotificationChannel(mChannel);
+            }
+            // Android > 8 support for Channels because it not supported on previous versions
+            notificationBuilder = new NotificationCompat.Builder(this,channel_id);
+        }
+        else{
+            // Android < 7 Notification Builder init
+            notificationBuilder = new NotificationCompat.Builder(this);
+        }
+
+        notificationBuilder = new NotificationCompat.Builder(context)
             .setSmallIcon(@(Activity.Package).R.mipmap.notif)
             .setContentTitle(title)
             .setContentText(body)
             .setAutoCancel(true)
-#if @(Project.Android.NotificationIcon.Color:IsSet)
-            .setColor((int)0x@(Project.Android.NotificationIcon.Color))
-#endif
             .setContentIntent(pendingIntent);
 
         if (sound=="default")
         {
             android.net.Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-            notificationBuilder.setSound(defaultSoundUri);
+            notificationBuilder .setSound(defaultSoundUri);
         }
 
         if (icon != null && !icon.isEmpty())
@@ -219,7 +242,7 @@ public class PushNotificationReceiver extends FirebaseMessagingService
             if (iconResourceID!=-1)
             {
                 android.graphics.Bitmap bm = android.graphics.BitmapFactory.decodeResource(context.getResources(), iconResourceID);
-                notificationBuilder.setLargeIcon(bm);
+                notificationBuilder .setLargeIcon(bm);
             }
             else
             {
@@ -238,7 +261,7 @@ public class PushNotificationReceiver extends FirebaseMessagingService
                         e.printStackTrace();
                         return;
                     }
-                    notificationBuilder.setLargeIcon(bm);
+                    notificationBuilder .setLargeIcon(bm);
                 }
                 else
                 {
@@ -247,14 +270,11 @@ public class PushNotificationReceiver extends FirebaseMessagingService
             }
         }
 
-        android.app.NotificationManager notificationManager = (android.app.NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
-        Notification n = notificationBuilder.build();
+        Notification n = notificationBuilder .build();
         if (sound!="")
             n.defaults |= Notification.DEFAULT_SOUND;
         n.defaults |= Notification.DEFAULT_LIGHTS;
         n.defaults |= Notification.DEFAULT_VIBRATE;
-
-        int id = PushNotificationReceiver.nextID();
 
         notificationManager.notify(id, n);
     }

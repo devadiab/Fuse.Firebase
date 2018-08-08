@@ -26,8 +26,12 @@ namespace Firebase.Notifications
     public sealed class NotificationModule : NativeEventEmitterModule
     {
         static readonly NotificationModule _instance;
-        readonly iOSImpl _iOSImpl;
+        extern(iOS) readonly iOSImpl _iOSImpl;
         static NativeEvent _onRegistrationSucceedediOS;
+      
+        static NativeEvent onReceivedMessage;
+        static NativeEvent onRegistrationFailed;
+        static NativeEvent onRegistrationSucceeded;
 
         public NotificationModule()
             : base(true,
@@ -37,13 +41,14 @@ namespace Firebase.Notifications
             if (_instance != null) return;
             Resource.SetGlobalKey(_instance = this, "Firebase/Notifications");
 
-            _iOSImpl = new iOSImpl();
+            if defined(iOS)
+              _iOSImpl = new iOSImpl();
+      
+            onReceivedMessage = new NativeEvent("onReceivedMessage");
+            onRegistrationFailed = new NativeEvent("onRegistrationFailed");
+            onRegistrationSucceeded = new NativeEvent("onRegistrationSucceeded");
 
             // Old-style events for backwards compatibility
-            var onReceivedMessage = new NativeEvent("onReceivedMessage");
-            var onRegistrationFailed = new NativeEvent("onRegistrationFailed");
-            var onRegistrationSucceeded = new NativeEvent("onRegistrationSucceeded");
-
             On("receivedMessage", onReceivedMessage);
             // Note: If we decide to remove these old-style events in the future, the
             // "error" event will no longer have a listener by default, meaning that the
@@ -91,8 +96,7 @@ namespace Firebase.Notifications
         }
 
         static void OnRegistrationSucceedediOS(string message) {
-               //_onRegistrationSucceedediOS.RaiseAsync(message);
-               // App is getting crash sometimes at this function and now we are getting FCM token via GetFCMToken(), so we can put it in comment
+             _onRegistrationSucceedediOS.RaiseAsync(message);
         }
 
         /**

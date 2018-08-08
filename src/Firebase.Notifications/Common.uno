@@ -16,12 +16,6 @@ namespace Firebase.Notifications
     [extern(iOS) Require("Source.Include", "Firebase/Firebase.h")]
     public static class NotificationService
     {
-        extern(!Android)
-        static NotificationService()
-        {
-            OnRegistrationFailed(null, "Firebase Notifications are not yet available on this platform");
-        }
-
         extern(Android)
         static NotificationService()
         {
@@ -30,6 +24,16 @@ namespace Firebase.Notifications
             AndroidImpl.RegistrationFailed += OnRegistrationFailed;
             AndroidImpl.RegistrationSucceeded += OnRegistrationSucceeded;
             AndroidImpl.Init();
+        }
+
+        extern(iOS)
+        static NotificationService()
+        {
+            Firebase.Core.Init();
+            iOSImpl.ReceivedNotification += OnReceived;
+            iOSImpl.NotificationRegistrationFailed += OnRegistrationFailed;
+            iOSImpl.NotificationRegistrationSucceeded += OnRegistrationSucceeded;
+            iOSImpl.Init();
         }
 
         public static void OnReceived(object sender, KeyValuePair<string,bool> notification)
@@ -45,9 +49,7 @@ namespace Firebase.Notifications
         {
             var x = _registrationFailed;
             if (x!=null)
-            {
                 x(null, message);
-            }
             else
             {
                 _pendingSuccess = null;
@@ -59,9 +61,7 @@ namespace Firebase.Notifications
         {
             var x = _registrationSucceeded;
             if (x!=null)
-            {
                 x(null, message);
-            }
             else
             {
                 _pendingFailure = null;
@@ -99,9 +99,7 @@ namespace Firebase.Notifications
             {
                 _registrationSucceeded += value;
                 if (_pendingSuccess!=null)
-                {
                     value(null, _pendingSuccess);
-                }
             }
             remove {
                 _registrationSucceeded -= value;
@@ -114,9 +112,7 @@ namespace Firebase.Notifications
             {
                 _registrationFailed += value;
                 if (_pendingFailure!=null)
-                {
                     value(null, _pendingFailure);
-                }
             }
             remove {
                 _registrationFailed -= value;
